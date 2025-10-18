@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Corevalues – MVSD Value List & Trade Calculator</title>
+  <style>
+    :root { --bg:#0a0c0f; --panel:#12161a; --text:#f2f4f8; --muted:#8b96a8; --border:#1d232c; --brand:#4da3ff; --brand2:#7dceff; --red:#ff4b4b; --green:#4bff6f; --orange:#ffa500; }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.4 sans-serif; }
+    .container { max-width:1200px; padding:20px; margin:auto; }
+    header { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+    .logo { width:50px;height:50px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand2)); display:flex; align-items:center; justify-content:center; font:700 20px sans-serif; color:#fff; }
+    h1 { margin:0; font-size:24px; }
+    .toolbar { margin-bottom:18px; display:flex; gap:12px; }
+    input, button { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; }
+    button { cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center; transition:transform 0.2s; }
+    .card:hover { transform:translateY(-5px); }
+    .card img { max-width:100%; height:auto; border-radius:8px; margin-bottom:8px; }
+    .card .name { font-weight:700; margin-bottom:4px; }
+    .card .status, .card .demand, .card .value { font-size:14px; color:var(--muted); margin-bottom:2px; }
+    .demand { font-weight:700; }
+    .footer { text-align:center; margin-top:20px; font-size:13px; color:var(--muted); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">Core</div>
+    <div>
+      <h1>Corevalues</h1>
+      <div style="font-size:14px; color:var(--muted)">MVSD Value List & Trade Calculator</div>
+    </div>
+    <div class="header-buttons" style="margin-left:auto; display:flex; gap:12px;">
+    <a href="index.html" class="page2-btn" style="background:var(--brand); color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:700;">Trade Calculator</a>
+    <a href="index2.html" class="page2-btn" style="background:var(--brand); color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:700;">Value List</a>
+    <a href="https://discord.gg/aTHTecWu3z" 
+    class="page2-btn" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    style="background:var(--brand); 
+          color:#fff; 
+          padding:8px 16px; 
+          border-radius:8px; 
+          text-decoration:none; 
+          font-weight:700;">
+    Discord Server
+</a>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input id="search" placeholder="Search...">
+    <button id="reset">Reset</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="footer">© Corevalues • Commercial Value Lists 2025</div>
+</div>
+
+<script>
+const demandRatings = {
+  "10/10": 10,
+  "9/10": 9,
+  "8/10": 8,
+  "7/10": 7,
+  "6/10": 6,
+  "5/10": 5,
+  "4/10":4,
+  "3/10": 3,
+  "2/10": 2,
+};
+
+// MVSD ITEMS (MISSING QUITE A FEW)
+const items = [
+  //strife
+  {name:"Red Strife Gun",series:"strife", keywords:"rsg",status:"8/10", value:"N/A", img:"https://i.postimg.cc/13T4NPj6/image.png"},
+  {name:"Red Strife Knife",series:"strife", keywords:"rsk",status:"6/10", value:"N/A", img:"https://i.postimg.cc/pTjw9SZZ/image.png"},
+  {name:"Green Strife Gun",series:"strife", keywords:"gsg",status:"9/10", value:"N/A", img:"https://i.postimg.cc/m2grXtxC/image.png"},
+  {name:"Green Strife Knife",series:"strife", keywords:"gsk",status:"6/10", value:"N/A", img:"https://i.postimg.cc/zD0jCjcS/image.png"},
+  {name:"Yellow Strife Gun",series:"strife", keywords:"ysg",status:"8/10", value:"N/A", img:"https://i.postimg.cc/hj2kf4CR/image.png"},
+  {name:"Yellow Strife Knife",series:"strife", keywords:"ysk",status:"6/10", value:"N/A", img:"https://i.postimg.cc/ryxjD46M/image.png"},
+  {name:"Purple Strife Gun",series:"strife", keywords:"psg",status:"9/10", value:"N/A", img:"https://i.postimg.cc/63h9zNYM/image.png"},
+  {name:"Purple Strife Knife",series:"strife", keywords:"psk",status:"7/10", value:"N/A", img:"https://i.postimg.cc/qBxBBm7r/image.png"},
+// Willow
+  {name:"Red Willow Gun",series:"willow", keywords: "rwg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/7YnW6Zbs/image.png"},
+  {name:"Red Willow Knife",series:"willow",  keywords: "rwk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/DyW2Q7gv/image.png"},
+  {name:"Blue Willow Gun",series:"willow",  keywords: "bwg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/nLbjPpGx/image.png"},
+  {name:"Blue Willow Knife",series:"willow",  keywords: "bwk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/W3bDTQPd/image.png"},
+  {name:"Green Willow Gun", series:"willow", keywords: "gwg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/mrzjQL2G/image.png"},
+  {name:"Green Willow Knife",series:"willow",  keywords:"gwk",status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/bNjhn1sT/image.png"},
+  {name:"Purple Willow Gun",series:"willow",  keywords:"pwg",status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/wvWBgpL7/image.png"},
+  {name:"Purple Willow Knife",series:"willow",  keywords:"pwk",status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/fbkLPY7d/image.png"},
+  {name:"Willow Case",series:"willow", keywords:"wc, case, box",status:"Rising",value:"N/A",img:"https://i.postimg.cc/5NHG878h/image.png"},
+  {name:"Steel Case",series:"willow",  keywords:"sc, metal, box, crate",status:"Slowly rising",value:"N/A",img:"https://i.postimg.cc/6QxDWr2D/image.png"},
+// Dragonfire
+  {name:"Red Dragonfire Gun", series:"dragonfire", keywords:"rdg , df , rdfg, red df gun, df gun", status:"Slowly rising", value:"140K", img:"https://i.postimg.cc/02n87xbj/image.png"},
+  {name:"Red Dragonfire Knife",series:"dragonfire", keywords:"rdk , df , rdfk, red df knife, df knife", status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/QtQRJx4z/image.png"},
+  {name:"Blue Dragonfire Gun", series:"dragonfire",keywords:"bdg , df ,bdfg, blue df gun, df gun",status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/ZK5ktN5Y/image.png"},
+  {name:"Blue Dragonfire Knife",series:"dragonfire", keywords:"bdk , df ,bdfk, blue df knife, df knife",status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/7Zr0pHm9/image.png"},
+  {name:"Purple Dragonfire Gun", series:"dragonfire",keywords:"pdg , df , pdfg, purple df gun, df gun",status:"Slowly rising", value:"140K", img:"https://i.postimg.cc/QtYQFv1y/image.png"},
+  {name:"Purple Dragonfire Knife",series:"dragonfire", keywords:"pdk , df ,pdfk, purple df knife, df knife",status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/ZKw0LJX0/image.png"},
+  {name:"Black Dragonfire Gun",series:"dragonfire", keywords:"bdg , df ,bdfg, bldfg, black df gun, df gun",status:"Slowly rising", value:"140K", img:"https://i.postimg.cc/25pX6LrZ/image.png"},
+  {name:"Black Dragonfire Knife",series:"dragonfire", keywords:"bdk , df ,bdfk, bldfk, black df knife, df knife",status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/RCfcGJTh/image.png"},
+  {name:"Red Dragonfire Sniper", series:"dragonfire",keywords:"rds , df ,rdfs, red df sniper, df sniper",status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/SR2yW1ts/image.png"},
+  {name:"Blue Dragonfire Sniper",series:"dragonfire", keywords:"bds , df ,bdfs, blue df sniper, df sniper",status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/TwvSk7w1/image.png"},
+  {name:"Purple Dragonfire Sniper",series:"dragonfire", keywords:"pds , df ,pdfs, purple df sniper, df sniper",status:"Slowly rising", value:"N/A", img:"https://i.postimg.cc/L8zjtNrN/image.png"},
+  {name:"Black Dragonfire Sniper",series:"dragonfire", keywords:"bds , df ,bdfs, bldfs, black df sniper, df sniper",status:"Slowly rising", value:"140K", img:"https://i.postimg.cc/h4ysvZBm/image.png"},
+// Peppermint
+  {name:"Red Peppermint Gun",series:"peppermint", keywords:"rpg, red pep gun, pep", status:"Rising", value:"125K", img:"https://i.postimg.cc/PqtY2dM7/image.png"},
+  {name:"Red Peppermint Knife",series:"peppermint", keywords:"rpk, red pep knife, pep", status:"Rising", value:"N/A", img:"https://i.postimg.cc/vTdMznH5/image.png"},
+  {name:"Blue Peppermint Gun",series:"peppermint", keywords:"bpg, blue pep gun, pep",status:"Rising", value:"125K", img:"https://i.postimg.cc/GtYx6qTg/image.png"},
+  {name:"Blue Peppermint Knife", series:"peppermint",keywords:"bpk, blue pep knife, pep",status:"Rising", value:"N/A", img:"https://i.postimg.cc/VNCHfVmW/image.png"},
+  {name:"Green Peppermint Gun",series:"peppermint", keywords:"gpg, green pep gun, pep",status:"Rising", value:"125K", img:"https://i.postimg.cc/hvF98TZL/image.png"},
+  {name:"Green Peppermint Knife",series:"peppermint", keywords:"gpk, green pep knife, pep",status:"Rising", value:"N/A", img:"https://i.postimg.cc/k5sRbnJJ/image.png"},
+  {name:"Purple Peppermint Gun", series:"peppermint",keywords:"ppg, purple pep gun, pep",status:"Rising", value:"125K", img:"https://i.postimg.cc/28rWzzsS/image.png"},
+  {name:"Purple Peppermint Knife", series:"peppermint",keywords:"ppk, puple pep knife, pep",status:"Rising", value:"N/A", img:"https://i.postimg.cc/02vK5W1d/image.png"},
+  {name:"Santa Case", series:"peppermint",keywords:"sc, santa, crate, box",status:"Stable",value:"N/A", img:"https://i.postimg.cc/hjjMcvrk/image.png"},
+// Ornament
+  {name:"Red Ornament Gun", series:"ornament",keywords:"rog, red orn gun, orn, orn gun",status:"Ornament", value:"125K", img:"https://i.postimg.cc/c1pvHdPn/image.png"},
+  {name:"Red Ornament Knife", series:"ornament",keywords:"rok, red orn knife, orn, orn knife",status:"Ornament", value:"N/A", img:"https://i.postimg.cc/B6pKF20w/image.png"},
+  {name:"Blue Ornament Gun", series:"ornament",keywords:"bog, blue orn gun, orn, orn gun",status:"Ornament", value:"125K", img:"https://i.postimg.cc/VsCN235L/image.png"},
+  {name:"Blue Ornament Knife", series:"ornament",keywords:"bok, blue orn knife, orn, orn knife",status:"Ornament", value:"N/A", img:"https://i.postimg.cc/cJs1n2L0/image.png"},
+  {name:"Green Ornament Gun", series:"ornament",keywords:"gog, green orn gun, orn, orn gun",status:"Ornament", value:"125K", img:"https://i.postimg.cc/YqdTRSk4/image.png"},
+  {name:"Green Ornament Knife",series:"ornament",keywords:"gok, green orn knife, orn, orn knife", status:"Ornament", value:"N/A", img:"https://i.postimg.cc/yYs75209/image.png"},
+  {name:"Purple Ornament Gun", series:"ornament",keywords:"pog, purple orn gun, orn, orn gun",status:"Ornament", value:"125K", img:"https://i.postimg.cc/jS5YY7vQ/image.png"},
+  {name:"Purple Ornament Knife", series:"ornament",keywords:"pok, purple orn knife, orn, orn knife",status:"Ornament", value:"N/A", img:"https://i.postimg.cc/hPLfQ918/image.png"},
+  {name:"Ornament Case", series:"ornament",keywords:"oc, orn, orn case, crate, box",status:"Stable",value:"N/A", img:"https://i.postimg.cc/fW64qQWz/image.png"},
+// Celestial
+  {name:"Celestial Gun",series:"celestial", keywords:"cel, cel gun", status:"Celestial", value:"N/A",img:"https://i.postimg.cc/bY0LC24d/image.png"},
+  {name:"Celestial Knife",series:"celestial", keywords:"cel, cel knife",status:"Celestial", value:"N/A",img:"https://i.postimg.cc/wBNzmVMw/image.png"},
+  {name:"Celestial Sniper",series:"celestial", keywords:"cel sniper, cel",status:"Celestial", value:"265K", img:"https://i.postimg.cc/R0fwWkBq/image.png"},
+// Fang
+  {name:"Red Fang Gun", series:"fang",keywords:"rfg, red fang gun, fang", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/Rh3SbxnC/image.png"},
+  {name:"Red Fang Knife", series:"fang", keywords:"rfk, red fang knife, fang", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/Y08KtnKG/image.png"},
+  {name:"Blue Fang Gun", series:"fang", keywords:"bfg, blue fang gun, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/NGrL4R86/image.png"},
+  {name:"Blue Fang Knife", series:"fang", keywords:"bfk, blue fang knife, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/52XBqXtD/image.png"},
+  {name:"Green Fang Gun",  series:"fang",keywords:"gfg, green fang gun, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/63PwZbbk/image.png"},
+  {name:"Green Fang Knife", series:"fang", keywords:"gfk, green fang knife, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/g0kPTbC9/image.png"},
+  {name:"Purple Fang Gun", series:"fang", keywords:"pfg, purple fang gun, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/fLySZF0p/image.png"},
+  {name:"Purple Fang Knife", series:"fang", keywords:"pfk, purple fang knife, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/CKDbX9kN/image.png"},
+  {name:"Gray Fang Gun",series:"fang",keywords:"gfg, fng",status:"6/10",value:"N/A",img:"https://i.postimg.cc/CKDbX9kN/image.png"},
+  {name:"Gray Fang Knife",series:"fang",keywords:"gfk, fng",status:"5/10",value:"105",img:"https://i.postimg.cc/wx1hLtbJ/image.png"},
+  {name:"Red Fang Sniper",  series:"fang",keywords:"rfs, red fang sniper, fang", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/NMD2wtM1/image.png"},
+  {name:"Blue Fang Sniper",  series:"fang",keywords:"bfs, blue fang sniper, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/8P9JGt1n/image.png"},
+  {name:"Green Fang Sniper", series:"fang", keywords:"gfs, green fang sniper, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/WzfDh70z/image.png"},
+  {name:"Purple Fang Sniper", series:"fang", keywords:"pfs, purple fang sniper, fang",status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/sx8XVgRZ/image.png"},
+
+// Ice Pegasus
+  {name:"White Ice Pegasus Gun",series:"Pegasus",keywords:"wipg, white ice peg gun, peg, white pegasus gun, white peg knife",status:"Stable",value:"N/A",img:"https://i.postimg.cc/XNL6vTmq/image.png"},
+  {name:"White Ice Pegasus Knife",series:"Pegasus",keywords:"wipk, white ice peg knife, peg, white pegasus knife, white peg knfie",status:"Stable",value:"20",img:"https://i.postimg.cc/K8gjXGzC/image.png"},
+  {name:"Red Ice Pegasus Gun",series:"Pegasus",keywords:"ripg, red ice peg gun, peg, red pegasus gun, red peg gun",status:"Stable",value:"N/A",img:"https://i.postimg.cc/4xrrMZ7L/image.png"},
+  {name:"Red Ice Pegasus Knife",series:"Pegasus",keywords:"ripk, red ice peg knife, peg, red pegasus knife, red peg knife",status:"Stable",value:"22",img:"https://i.postimg.cc/KjHGVwyZ/image.png"}, 
+  {name:"Black Ice Pegasus Gun",series:"Pegasus",keywords:"bipg, black ice peg gun, peg, black pegasus gun, black peg gun",status:"Stable",value:"N/A",img:"https://i.postimg.cc/GpGZnNvc/image.png"},
+  {name:"Black Ice Pegasus Knife",series:"Pegasus",keywords:"bipk, black ice peg knife, peg, black pegasus knife, black peg knife",status:"Stable",value:"25",img:"https://i.postimg.cc/j2mTvfz2/image.png"},
+  {name:"Blue Ice Pegasus Gun",series:"Pegasus",keywords:"bipg, blue ice peg gun, peg, blue pegasus gun, blue peg gun",status:"Stable",value:"N/A",img:"https://i.postimg.cc/7YhdZbSt/image.png"},
+  {name:"Blue Ice Pegasus Knife",series:"Pegasus",keywords:"bipk, blue ice peg knife, peg, blue pegasus knife, blue peg knife",status:"Stable",value:"28",img:"https://i.postimg.cc/D0bHvMXf/image.png"},
+  {name:"Purple Ice Pegasus Gun",series:"Pegasus",keywords:"pipg, purple ice peg gun, peg, purple pegasus gun, purple peg gun",status:"Stable",value:"N/A",img:"https://i.postimg.cc/XYyP9hHw/image.png"},
+  {name:"Purple Ice Pegasus Knife",series:"Pegasus",keywords:"pipk, purple ice peg knife, peg, purple pegasus knife, purple peg knife",status:"Stable",value:"30",img:"https://i.postimg.cc/fyZqsRDC/image.png"},
+  {name:"White Ice Pegasus Sniper",series:"Pegasus",keywords:"wips, white ice peg sniper, peg, white pegasus sniper, white peg sniper",status:"Stable",value:"N/A",img:"https://i.postimg.cc/YqTgLymK/image.png"},
+  {name:"Red Ice Pegasus Sniper",series:"Pegasus",keywords:"rips, red ice peg sniper, peg, red pegasus sniper, red peg sniper",status:"Stable",value:"N/A",img:"https://i.postimg.cc/Sx8967WX/image.png"},
+  {name:"Black Ice Pegasus Sniper",series:"Pegasus",keywords:"bips, black ice peg sniper, peg, black pegasus sniper, black peg sniper",status:"Stable",value:"N/A",img:"https://i.postimg.cc/d1WZsWKf/image.png"},
+  {name:"Blue Ice Pegasus Sniper",series:"Pegasus",keywords:"bips, blue ice peg sniper, peg, blue pegasus sniper, blue peg sniper",status:"Stable",value:"N/A",img:"https://i.postimg.cc/wMZtJ7Mc/image.png"},
+  {name:"Purple Ice Pegasus Sniper",series:"Pegasus",keywords:"pips, purple ice peg sniper, peg, purple pegasus sniper, purple peg sniper",status:"Stable",value:"N/A",img:"https://i.postimg.cc/brxJG3X8/image.png"},
+  //
+
+// Rosethorn/Frostbite
+  {name:"Rosethorn Crossbow", keywords:"rtc, rosethorn crossbow, rosethorn, rose, rose gun, rose bow, rosethorn bow, rosethorn gun", status:"Stable", value:"N/A", img:"https://i.postimg.cc/rmq0NTSp/image.png"},
+  {name:"Rosethorn Knife", keywords:"rtd, rosethorn knife, rosethorn, rose knife, rose", status:"Stable", value:"28", img:"https://i.postimg.cc/wB8V952C/image.png"},
+  {name:"Frostbite Crossbow", keywords:"fbc, frostbite crossbow, frostbite, gun, fb gun, fb, fb crossbow, bow, fb bow, frostbite bow", status:"Stable", value:"N/A", img:"https://i.postimg.cc/q7DYrJjt/image.png"},
+  {name:"Frostbite Axe", keywords:"fbk, frostbite knife, frostbite, fb axe, fb knife, fba", status:"Stable", value:"N/A", img:"https://i.postimg.cc/bvxh3TdL/image.png"},
+// Lows
+  {name:"Dragon Breathe", keywords:"db, dragon breathe", status:"Dropping", value:"15", img:"https://i.postimg.cc/j5y54Zcx/image.png00"},
+  {name:"Void Crossbow", keywords:"vc, void crossbow", status:"Dropping", value:"21", img:"https://i.postimg.cc/2yv1Ctwv/image.png"},
+  {name:"Bat Scythe", keywords:"bs, bat scythe", status:"Dropping", value:"18", img:"https://i.postimg.cc/ZRbgwqFW/image.png"},
+  {name:"2B", keywords:"2b", status:"Dropping", value:"16", img:"https://i.postimg.cc/tTqZtD9G/image.png"},
+  {name:"Saber", keywords:"saber", status:"Dropping", value:"18", img:"https://i.postimg.cc/7ZXQf4yD/image.png"},
+  {name:"Splatter",keywords:"Splatter, paintball gun",status:"Stable",value:"17",img:"https://i.postimg.cc/X7CJ5t9y/image.png"},
+// Android
+  {name:"Pink Android Gun", keywords:"rag, red android gun, android", status:"Dropping", value:"N/A", img:"https://i.postimg.cc/HsfMMF8h/image.png"},
+  {name:"Pink Android Knife", keywords:"rak, red android knife, android", status:"Dropping",value:"30",img:"https://i.postimg.cc/0yFVbt9k/image.png"},
+  {name:"Blue Android Gun", keywords:"bag, blue android gun, android", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/yYJ9k7xR/image.png"},
+  {name:"Blue Android Knife", keywords:"bak, blue android knife, android", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/7YqdkQZj/image.png"},
+  {name:"Green Android Gun", keywords:"gag, green android gun, android", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/Y00FNHxJ/image.png"},
+  {name:"Green Android Knife", keywords:"gak, green android knife, android", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/gkD9Lb7Y/image.png"},
+  {name:"Black Android Gun", keywords:"bag, black android gun, android, blag", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/yxRZpTwP/image.png"},
+  {name:"Black Android Knife", keywords:"bak, black android knife, android, blak", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/VLNg4y6s/image.png"},
+  {name:"Pink Android Sniper", keywords:"ras, red android sniper, android", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/YCPtjw4v/image.png"},
+  {name:"Blue Android Sniper", keywords:"bas, blue android sniper, android", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/x8QfYyXg/image.png"},
+  {name:"Green Android Sniper", keywords:"gas, green android sniper, android", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/MGcKYGk0/image.png"},
+  {name:"Black Android Sniper", keywords:"bas, black android sniper, android, blas", status:"Overpaid for", value:"N/A", img:"https://i.postimg.cc/sXdy994y/image.png"},
+// Solstice
+  {name:"Solstice Gun", keywords:"sol, solstice gun, solstice, sg", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/XvQd06XC/image.png"},
+  {name:"Solstice Knife", keywords:"sol, solstice knife, solstice, sk", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/LX37SXLV/image.png"},
+  {name:"Solstice Sniper", keywords:"sol, solstice sniper, solstice, ss", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/CKNHLfrd/image.png"},
+// Harmonic
+  {name:"Harmonic Gun", keywords:"harmonic gun, harmonic. harm, hg", status:"Stable", value:"N/A", img:"https://i.postimg.cc/yY7gzsDp/image.png"},
+  {name:"Harmonic Knife", keywords:"harmonic knife, harmonic, harm, hk", status:"Stable", value:"N/A", img:"https://i.postimg.cc/63HdDgYm/image.png"},
+  {name:"Harmonic Sniper", keywords:"harmonic sniper, harmonic, harm, hs", status:"Stable", value:"N/A", img:"https://i.postimg.cc/WzvDzPX3/image.pngg"},
+  // Items above this like draco is gathering images for :D     // Angel
+  {name:"Angel Crossbow", keywords:"angel crossbow, angel, ac", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/6qzv5wcm/image.png"},
+  {name:"Angel Knife", keywords:"angel knife, angel, ak", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/SNyL01dP/image.png"},
+  // Phoenix
+  {name:"Phoenix Angel Knife", keywords:"phoenix angel knife, phoenix angel, pak, phx, phx angel", status:"Rising", value:"N/A", img:"https://i.postimg.cc/Y04SVJmM/image.png"},
+  {name:"Phoenix Strife Gun", keywords:"phoenix strife gun, phoenix strife, psg, psk, phx strife", status:"Rising", value:"N/A", img:"https://i.postimg.cc/kXzTk8Lm/image.png"},
+  {name:"Phoenix Willow Gun", keywords:"phoenix willow gun, phoenix willow, pwg, pwk, phx willow", status:"Rising", value:"N/A", img:"https://i.postimg.cc/YqhXn8nR/image.png"},
+  {name:"Phoenix Mermaid Knife", keywords:"phoenix mermaid knife, phoenix mermaid, pmk, phx mermaid", status:"Rising", value:"N/A", img:"https://i.postimg.cc/hvhJnXNF/image.png"},
+  {name:"Phoenix Dragonfire Sniper", keywords:"phoenix dragonfire sniper, phoenix df sniper, pds, phx df sniper", status:"Rising", value:"N/A", img:"https://i.postimg.cc/W4RfJr7n/image.png"},
+  {name:"Phoenix Fang Sniper", keywords:"phoenix fang sniper, pfs, phx fang sniper", status:"Rising", value:"N/A", img:"https://i.postimg.cc/1RWCrbH4/image.png"},
+  {name:"Phoenix Case", keywords:"phoenix case, phx case", status:"Rising", value:"N/A", img:"https://i.postimg.cc/Dy11Ly8j/image.png"},
+  // Frost
+  {name:"Frost Dragonfire Gun", keywords:"frost dragonfire gun, frost df gun, frost df, fdg", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/wj3BPfY4/image.png"},
+  {name:"Frost Rosethorn Knife", keywords:"frost rosethorn knife, frost rosethorn, frost rt, frk", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/pLyDZJGR/image.png"},
+  {name:"Frost Rhinestone Knife", keywords:"frost rhinestone knife, frost rhinestone, frost rk, frk", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/yNzw9xjh/image.png"},
+  {name:"Frost Fang Knife", keywords:"frost fang knife, frost fang, frost fk, ffk", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/Kzpq98PH/image.png"},
+  {name:"Frost Flutter Gun", keywords:"frost flutter gun, frost flutter, frost fg, ffg", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/mkbLSVSw/image.png"},
+  {name:"Frost Celestial Gun", keywords:"frost celestial gun, frost celestial, frost cg, fcg", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/wjS9r9V3/image.png"},
+  {name:"Frost Reaper Sniper", keywords:"frost reaper sniper, frost reaper, frost rs, frs", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/25VBQj56/image.png"},
+  {name:"Frost Mermaid Sniper", keywords:"frost mermaid sniper, frost mermaid, frost ms, fms", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/BZ8MSscJ/image.png"},
+  {name:"Frost Case", keywords:"frost case, frost", status:"Very slowly rising", value:"N/A", img:"https://i.postimg.cc/D05D3c3B/image.png"},
+  // Mermaid
+  {name:"Black Mermaid Gun", keywords:"black mermaid gun, black mermaid, bmg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/kGFGdhP1/image.png"},
+  {name:"Black Mermaid Knife", keywords:"black mermaid knife, black mermaid, bmk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/VL2fV8tf/image.png"},
+  {name:"White Mermaid Gun", keywords:"white mermaid gun, white mermaid, wmg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/X74Xg39T/image.png"},
+  {name:"White Mermaid Knife", keywords:"white mermaid knife, white mermaid, wmk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/cHcCpbSD/image.png"},
+  {name:"Blue Mermaid Gun", keywords:"blue mermaid gun, blue mermaid, bmg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/j2sKyxBc/image.png"},
+  {name:"Blue Mermaid Knife", keywords:"blue mermaid knife, blue mermaid, bmk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/wBgdCTjp/image.png"},
+  {name:"Purple/Gold Mermaid Gun", keywords:"pink/gold mermaid gun, pink/gold mermaid, pgmg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/VLqnYDFc/image.png"},
+  {name:"Purple/Gold Mermaid Knife", keywords:"pink/gold mermaid knife, pink/gold mermaid, pgmk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/kXY6Mztz/image.png"},
+  {name:"Red/Gold Mermaid Gun", keywords:"red/gold mermaid gun, red/gold mermaid, rgmg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/2STWWyJc/image.png"},
+  {name:"Red/Gold Mermaid Knife", keywords:"red/gold mermaid knife, red/gold mermaid, rgmk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/CxZZR7G1/image.png"},
+  {name:"Pink/Blue Mermaid Gun", keywords:"pink/blue mermaid gun, pink/blue mermaid, pbmg", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/B6FtmnYG/image.png"},
+  {name:"Pink/Blue Mermaid Knife", keywords:"pink/blue mermaid knife, pink/blue mermaid, pbmk", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/k5KBc5hP/image.png"},
+  {name:"Black Mermaid Sniper", keywords:"black mermaid sniper, black mermaid, bms", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/Zng74jPN/image.png"},
+  {name:"White Mermaid Sniper", keywords:"white mermaid sniper, white mermaid, wms", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/Qx24z4dG/image.png"},
+  {name:"Blue Mermaid Sniper", keywords:"blue mermaid sniper, blue mermaid, bms", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/8C1H8q83/image.png"},
+  {name:"Purple/Gold Mermaid Sniper", keywords:"pink/gold mermaid sniper, pink/gold mermaid, pgms", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/Y0b7RcHH/image.png"},
+  {name:"Pink/Blue Mermaid Sniper", keywords:"pink/blue mermaid sniper, pink/blue mermaid, pbms", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/MT93rzvd/image.png"},
+  {name:"Red/Gold Mermaid Sniper", keywords:"red/gold mermaid sniper, red/gold mermaid, rgms", status:"Underpaid for", value:"N/A", img:"https://i.postimg.cc/vZ6RgxcM/image.png"},
+// Flutter
+  {name:"Red Flutter Gun", keywords:"red flutter gun, red flutter, rfg", status:"Stable", value:"N/A", img:"https://i.postimg.cc/Hx0Nhq9d/image.png"},
+  {name:"Red Flutter Knife", keywords:"red flutter knife, red flutter, rfk", status:"Stable", value:"N/A", img:"https://i.postimg.cc/8kZ4zRw1/image.png"},
+  {name:"Blue Flutter Gun", keywords:"blue flutter gun, blue flutter, bfg", status:"Stable", value:"N/A", img:"https://i.postimg.cc/qqPpGVJ0/image.png"},
+  {name:"Blue Flutter Knife", keywords:"blue flutter knife, blue flutter, bfk", status:"Stable", value:"N/A", img:"https://i.postimg.cc/zXPx0CRd/image.png"},
+  {name:"Black Flutter Gun", keywords:"black flutter gun, black flutter, blfg, bfg", status:"Stable", value:"N/A", img:"https://i.postimg.cc/gcq4FqFc/image.png"},
+  {name:"Black Flutter Knife", keywords:"black flutter knife, black flutter, blfk, bfk", status:"Stable", value:"N/A", img:"https://i.postimg.cc/pdKkW3c7/image.png"},
+  {name:"Pink Flutter Gun", keywords:"pink flutter gun, pink flutter, pfg", status:"Stable", value:"N/A", img:"https://i.postimg.cc/gJwJyKVV/image.png"},
+  {name:"Pink Flutter Knife", keywords:"pink flutter knife, pink flutter, pfk", status:"Stable", value:"N/A", img:"https://i.postimg.cc/zvGkkvDZ/image.png"},
+  {name:"Purple Flutter Gun", keywords:"purple flutter gun, purple flutter, pufg, pfg", status:"Stable", value:"N/A", img:"https://i.postimg.cc/L8RJdLSS/image.png"},
+  {name:"Purple Flutter Knife", keywords:"purple flutter knife, purple flutter, pufk, pfk", status:"Stable", value:"N/A", img:"https://i.postimg.cc/1tPBfMLz/image.png"},
+  {name:"Red Flutter Sniper", keywords:"red flutter sniper, red flutter, rfs", status:"Stable", value:"N/A", img:"https://i.imgur.com/placeholder_redfluttersniper.png"},
+  {name:"Blue Flutter Sniper", keywords:"blue flutter sniper, blue flutter, bfs", status:"Stable", value:"N/A", img:"https://i.postimg.cc/Hsm5wVxr/image.png"},
+  {name:"Black Flutter Sniper", keywords:"black flutter sniper, black flutter, blfs, bfs", status:"Stable", value:"N/A", img:"https://i.postimg.cc/9XnKzHFg/image.png"},
+  {name:"Pink Flutter Sniper", keywords:"pink flutter sniper, pink flutter, pfs", status:"Stable", value:"N/A", img:"https://i.postimg.cc/L5W80QS4/image.png"},
+  {name:"Purple Flutter Sniper", keywords:"purple flutter sniper, purple flutter, pufs, pfs", status:"Stable", value:"N/A", img:"https://i.postimg.cc/9fs1CCBy/image.png"},
+// Rhinestone
+  {name:"Red Rhinestone Gun", keywords:"red rhinestone gun, red rhinestone, rrg, rhine, red rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/4dbWyXRx/image.png"},
+  {name:"Red Rhinestone Knife", keywords:"red rhinestone knife, red rhinestone, rrk, rhine, red rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/QMz6wfkj/image.png"},
+  {name:"Blue Rhinestone Gun", keywords:"blue rhinestone gun, blue rhinestone, brg, rhine, blue rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/C1jj77cP/image.png"},
+  {name:"Blue Rhinestone Knife", keywords:"blue rhinestone knife, blue rhinestone, brk, rhine, blue rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/W3KhMv7M/image.png"},
+  {name:"Black Rhinestone Gun", keywords:"black rhinestone gun, black rhinestone, blrg, blkrg, rhine, black rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/W323R72f/image.png"},
+  {name:"Black Rhinestone Knife", keywords:"black rhinestone knife, black rhinestone, blrk, blkrk, rhine, black rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/QM7NKyMz/image.png"},  
+  {name:"Purple Rhinestone Gun", keywords:"purple rhinestone gun, purple rhinestone, prg, rhine, purple rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/vZYbZmRc/image.png"},
+  {name:"Purple Rhinestone Knife", keywords:"purple rhinestone knife, purple rhinestone, prk, rhine, purple rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/zD4rKksZ/image.png"},
+  {name:"Purple Rhinestone Sniper", keywords:"purple rhinestone sniper, purple rhinestone, prs, rhine, purple rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/VvjhPXD5/image.png"}, 
+  {name:"Red Rhinestone Sniper", keywords:"red rhinestone sniper, red rhinestone, rrs, rhine, red rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/VkT2Msrf/image.png"},
+  {name:"Blue Rhinestone Sniper", keywords:"blue rhinestone sniper, blue rhinestone, brs, rhine, blue rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/8CD7mGrv/image.png"},
+  {name:"Black Rhinestone Sniper", keywords:"black rhinestone sniper, black rhinestone, blrs, blkrs, rhine, black rhine", status:"Slightly overpaid for", value:"N/A", img:"https://i.postimg.cc/Nf6DssY9/image.png"},
+  // Nebula
+  {name:"Blue Nebula Gun", keywords:"bng, Blue neb gun, neb",status:"dropping", value:"N/A", img:"https://i.postimg.cc/rmphnhgQ/image.png"},
+  {name:"Blue Nebula Knife", keywords:"bnk, Blue neb knife, neb", status:"dropping", value:"N/A", img:"https://i.postimg.cc/52Gq472H/image.png"},
+  {name:"Black Nebula Gun", keywords:"bng, blng, black neb gun, neb",status:"dropping",value:"N/A",img:"https://i.postimg.cc/YS2K7zbm/image.png"},
+  {name:"Black Nebula Knife", keywords:"bnk, blnk, black neb knife, neb", status:"dropping",value:"N/A", img:"https://i.postimg.cc/1XJwLMd3/image.png"},
+  {name:"Pink Nebula Gun", keywords:"png, pink neb gun, neb", status:"dropping", value:"N/A",img:"https://i.postimg.cc/pTg6mfYC/image.png"},
+  {name:"Pink Nebula Knife", keywords:"pnk, pink neb knife, neb",status:"dropping",value:"N/A",img:"https://i.postimg.cc/FFDSFWP9/image.png"},
+  {name:"Green Nebula Gun", keywords:"gng, green neb gun, neb",status:"dropping",value:"N/A",img:"https://i.postimg.cc/8zDxdb8n/image.png"},
+  {name:"Green Nebula Knife",keywords:"gnk, green neb knife, neb",status:"dropping",value:"N/A",img:"https://i.postimg.cc/L5Cgy5qq/image.png"},
+  {name:"Red Nebula Gun",keywords:"rng, red neb gun, neb",status:"dropping",value:"N/A",img:"https://i.postimg.cc/pV5NPTYk/image.png"},
+  {name:"Red Nebula Knife",keywords:"rnk, red neb knife, neb",status:"dropping",value:"N/A",img:"https://i.postimg.cc/Hns74XLD/image.png"},
+
+  {name:"Winx Gun", keywords:"wg, wink gun",status:"dropping",value:"N/A",img:"https://i.postimg.cc/RFXdvSbt/image.png"},
+  {name:"Winx Knife", keywords:"wk, wink knife",status:"dropping",value:"N/A",img:"https://i.postimg.cc/3x8wv3LN/image.png"},
+  {name:"Winx Gun", keywords:"ws, wink sniper",status:"dropping",value:"N/A",img:"https://i.postimg.cc/fbQBKg9V/image.png"},
+
+  {name:"White Strife Gun", keywords:"wsg, white strif gun, whsg",status:"N/A",value:"N/A",img:"https://i.postimg.cc/mrv5bh9J/image.png"},
+
+  //Leprechaun
+  {name:"Leprechaun Gun",keywords:"lep, lg, lep gun",status:"stable",value:"N/A",img:"https://i.postimg.cc/3N9XK2HB/image.png"},
+  {name:"Leprechaun Knife",keywords:"lep, lk, lep knife",status:"stable",value:"N/A",img:"https://i.postimg.cc/4yLqM7nK/image.png"},
+
+
+
+  // Frostthorn
+  {name:"Frostthorn Gun", keywords:"ftg, fb, fb gun, frostbite, frosthorn gun", status:"Stable",value:"N/A",img:"https://i.postimg.cc/1ty1xXNR/image.png"},
+  {name:"Frostthorn Knife", keywords:"ftk, fb, fb knife, frostbite, frosthorn knife", status:"Stable", value:"N/a",img:"https://i.postimg.cc/pX5WJ9f3/image.png"},
+
+  {name:"Enchanted Fang Gun",keywords:"efg, fng",status:"stable", value:"N/A",img:"https://i.postimg.cc/c1z7hbqd/image.png"},
+  {name:"Enchanted Mermaid Gun",keywords:"emg, merm",status:"stable", value:"N/A",img:"https://i.postimg.cc/kg3Q3RXZ/image.png"},
+  {name:"Enchanted Willow Knife",keywords:"ewk, axe, knife, enchanted willow knife",status:"stable", value:"N/A",img:"https://i.postimg.cc/zDTD2y63/image.png"},
+  {name:"Enchanted Reaper Knife",keywords:"erk, reap", status:"5/10", value:"33", img:"https://i.postimg.cc/mrqZJCT1/image.png"},
+  {name:"Enchanted Celestial Sniper",keywords:"ecs, cel, snip, enchanted cel sniper",status:"stable", value:"N/A",img:"https://i.postimg.cc/k4XNYrXg/image.png"},
+  {name:"Enchanted Flutter Sniper",keywords:"efs, snip",status:"stable", value:"N/A",img:"https://i.postimg.cc/sfHm82Wd/image.png"},
+  {name:"Enchanted Case",keywords:"enchanted box, crate, case",status:"stable", value:"N/A",img:"https://i.postimg.cc/6qD0g7FW/image.png"},
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+];
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const grid = document.getElementById("grid");
+  const searchEl = document.getElementById("search");
+  const resetEl = document.getElementById("reset");
+
+  function asString(v) {
+    if (v == null) return '';
+    if (Array.isArray(v)) return v.join(' ');
+    return String(v);
+  }
+
+  // Create a normalized lookup from the existing demandRatings variable
+  const _demandLookup = {};
+  for (const k in (demandRatings || {})) {
+    _demandLookup[String(k).trim().toLowerCase()] = demandRatings[k];
+  }
+
+  function render() {
+    const s = (searchEl.value || '').toLowerCase();
+    const filtered = (items || []).filter(item => {
+      const name = asString(item.name).toLowerCase();
+      const status = asString(item.status).toLowerCase();
+      const keywords = asString(item.keywords).toLowerCase();
+      return name.includes(s) || status.includes(s) || keywords.includes(s);
+    });
+
+    grid.innerHTML = filtered.map(item => {
+      const statusKey = asString(item.status).trim().toLowerCase();
+      const demand = _demandLookup[statusKey] !== undefined ? _demandLookup[statusKey] : 0;
+      const color = demand <= 0 ? "var(--red)" : demand >= 10 ? "var(--green)" : "var(--orange)";
+      return `<div class="card">
+        <img src="${item.img || ''}" alt="${item.name || ''}">
+        <div class="name">${item.name || ''}</div>
+        <div class="value">Value: ${item.value || ''}</div>
+        <div class="demand" style="color:${color}">Demand: ${demand}/10</div>
+      </div>`;
+    }).join('');
+  }
+
+  searchEl.oninput = render;
+  resetEl.onclick = () => { searchEl.value = ''; render(); };
+
+  render();
+});
+</script>
+</body>
+</html>
